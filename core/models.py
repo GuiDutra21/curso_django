@@ -3,10 +3,10 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 class Categoria(models.Model):
-    desricao = models.CharField(max_length=255)
+    descricao = models.CharField(max_length=255)
     
     def __str__(self):
-        return self.desricao
+        return self.descricao
 
 class Editora(models.Model):
     nome = models.CharField(max_length=255)
