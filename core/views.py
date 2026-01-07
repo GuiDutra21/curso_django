@@ -20,7 +20,7 @@ class CategoriaView(View):
         # Retorna o elemento pelo id 
         if id:
             qs = Categoria.objects.get(id=id) # Recupera o elemento desejado
-            data={"id" : qs.id, "descricao": qs.descricao} # Cria o json que sera retornado
+            data = {"id" : qs.id, "descricao": qs.descricao} # Cria o json que sera retornado
             
             # OBS: Outra maneira de criar o json:
             # data = {}
@@ -38,5 +38,21 @@ class CategoriaView(View):
         new_catagoria = Categoria.objects.create(**json_data) # Cria o objeto
         data = {"id" : new_catagoria.id, "descricao": new_catagoria.descricao} # Cria o json que sera retornado
         return JsonResponse(data)
+    
+    def patch(self, request, id):
+        json_data = json.loads(request.body)
+        qs = Categoria.objects.get(id=id)
+        qs.descricao = json_data['descricao'] if 'descricao' in json_data else qs.descricao
+        qs.save() # Com o save a mudança é gravada no banco de dados permanentemente
+        data = {'id':qs.id, 'descricao': qs.descricao}
+        return JsonResponse(data)
+        
+    def delete(self,request, id):
+        qs = Categoria.objects.get(id=id)
+        qs.delete()
+        data = {'Mensagem' : 'Objeto deletado com sucesso'}
+        return JsonResponse(data)
+        
+        
 
 # Para fazer o retorno das resquisicoes eu posso usar tanto o HttpResponse quanto o JsonResponse, porem cada um tem os seus detalhes
