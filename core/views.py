@@ -1,9 +1,17 @@
 import json
+
 from django.http import HttpResponse,JsonResponse
 from django.views import View
-from core.models import Categoria
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
+
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.serializers import ModelSerializer
+from rest_framework.response import Response
+
+from core.models import Categoria
 
 def teste(request):
     return HttpResponse("ola mundo do django")
@@ -53,6 +61,50 @@ class CategoriaView(View):
         data = {'Mensagem' : 'Objeto deletado com sucesso'}
         return JsonResponse(data)
         
-        
-
 # Para fazer o retorno das resquisicoes eu posso usar tanto o HttpResponse quanto o JsonResponse, porem cada um tem os seus detalhes
+        
+# Agora vamos usar o Django Rest framework
+
+# O serializer é um componente do Django Rest Framework que funciona como um tradutor bidirecional entre objetos Python (como modelos do Django) e formatos de dados como JSON
+
+class CategoriaSerializer(ModelSerializer):
+    class Meta:
+        model = Categoria
+        fields = '__all__' # ou especifique os campos: ['id', 'descricao']
+
+class CategoriasList(APIView):
+    def get(self, request):
+        categorias = Categoria.objects.all()
+        serializer = CategoriaSerializer(categorias, many=True)
+        return Response(serializer.data)
+    
+    def post(seld,request):
+        serializer = CategoriaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CategoriaDetail(APIView):
+    
+    def get(self,request,id):
+        categorias = get_object_or_404(Categoria.objects.all(), id=id)
+        serializer = CategoriaSerializer(categorias)
+        return Response(serializer.data)
+    
+    def put(self,request,id):
+        
+        categoria = get_object_or_404(Categoria.objects.all(), id=id)
+        serializer = CategoriaSerializer(categoria,data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, id):
+        categoria = get_object_or_404(Categoria.objects.all(), id=id)
+        categoria.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
