@@ -10,6 +10,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.serializers import ModelSerializer
 from rest_framework.response import Response
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.viewsets import ModelViewSet
 
 from core.models import Categoria
 
@@ -20,7 +22,7 @@ def teste(request):
 # method_decorator: Adapta o decorator de função para funcionar em classes
 # name="dispatch": Aplica o decorator no método dispatch() da classe, que processa todas as requisições (GET, POST, PUT, DELETE, etc.)
 
-
+# O que ta nessa classe foi feito no padrao de Class-Based Views (CBV)
 @method_decorator(csrf_exempt, name="dispatch")
 class CategoriaView(View):
     def get(self,request,id=None):
@@ -60,19 +62,18 @@ class CategoriaView(View):
         qs.delete()
         data = {'Mensagem' : 'Objeto deletado com sucesso'}
         return JsonResponse(data)
+# Para fazer o retorno das resquisicoes eu posso usar tanto o HttpResponse quanto o JsonResponse, porem cada um tem os seus ajustes necessarios
         
-# Para fazer o retorno das resquisicoes eu posso usar tanto o HttpResponse quanto o JsonResponse, porem cada um tem os seus detalhes
-        
-# Agora vamos usar o Django Rest framework
 
 # O serializer é um componente do Django Rest Framework que funciona como um tradutor bidirecional entre objetos Python (como modelos do Django) e formatos de dados como JSON
-
 class CategoriaSerializer(ModelSerializer):
     class Meta:
         model = Categoria
         fields = '__all__' # ou especifique os campos: ['id', 'descricao']
 
+# O que ta nessas 2 classes abaixo foi feito usando o Django Rest Framework com o APIView
 class CategoriasList(APIView):
+    
     def get(self, request):
         categorias = Categoria.objects.all()
         serializer = CategoriaSerializer(categorias, many=True)
@@ -108,3 +109,19 @@ class CategoriaDetail(APIView):
         categoria = get_object_or_404(Categoria.objects.all(), id=id)
         categoria.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# Essas 2 classes abaixo foram feitas usando o Generic view
+class CategoriasListGeneric(ListCreateAPIView):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+
+class CategoriasDetailGeneric(RetrieveUpdateDestroyAPIView):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    lookup_field = 'id' # Define qual campo do modelo será usado para buscar o objeto
+    
+# Essa classe foi feita usando o ModelViewSet
+# Ao usar uma ViewSet eh recomendado usar o router
+class CategoriaViewSet(ModelViewSet):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
