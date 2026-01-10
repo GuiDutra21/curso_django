@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from core.models import Categoria, Editora, Autor
+from core.models import Categoria, Editora, Autor, Livro
 
 # O serializer é um componente do Django Rest Framework que funciona como um tradutor bidirecional entre objetos Python (como modelos do Django) e formatos de dados como JSON
 class CategoriaSerializer(ModelSerializer):
@@ -16,3 +16,15 @@ class AutorSerializer(ModelSerializer):
     class Meta:
         model = Autor
         fields = '__all__'
+        
+class LivroSerializer(ModelSerializer):
+    class Meta:
+        model = Livro
+        fields = '__all__'
+
+# Uma das possiveis maneiras de mostrar os detalhes(campos) das chaves estrageiras
+class LivroDetailSerializer(ModelSerializer): 
+    class Meta:
+        model = Livro
+        fields = '__all__'
+        depth = 1
