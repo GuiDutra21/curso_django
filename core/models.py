@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 from django.contrib.auth.models import User
 
 # Create your models here.
@@ -51,6 +52,11 @@ class Compra(models.Model):
     
     usuario = models.ForeignKey(User,on_delete=models.PROTECT, related_name='compras')
     status = models.IntegerField(choices=StatusCompra.choices, default=StatusCompra.CARRINHO)
+    
+    @property # Transforma um metodo em atributo de leitura
+    def total(self):
+        queryset = self.itens.all().aggregate(total=models.Sum(F('quantidade') * F('livro__preco')))
+        return queryset["total"]
     
     def __str__(self):
         return f"{self.usuario} -- {self.get_status_display()}"

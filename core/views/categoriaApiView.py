@@ -5,8 +5,6 @@ from rest_framework.views import APIView
 from core.models import Categoria
 from core.serializer import CategoriaSerializer
 
-
-
 # O que ta nessas 2 classes abaixo foi feito usando o Django Rest Framework com o APIView
 class CategoriasList(APIView):
     
