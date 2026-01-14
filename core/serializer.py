@@ -1,5 +1,6 @@
 from rest_framework.serializers import ModelSerializer, CharField, SerializerMethodField
 from core.models import Categoria, Editora, Autor, Livro, Compra, ItensCompra
+from rest_framework import serializers
 
 # O serializer é um componente do Django Rest Framework que funciona como um tradutor bidirecional entre objetos Python (como modelos do Django) e formatos de dados como JSON
 class CategoriaSerializer(ModelSerializer):
@@ -75,6 +76,8 @@ class CriarEditarItensCompraSerialzier(ModelSerializer):
         
 class CriarEditarCompraSerializer(ModelSerializer):
     itens = CriarEditarItensCompraSerialzier(many=True)
+    # Com isso nao precisa mais passar o usuario na requisicao, pois ele ja pega o usuario atual
+    usuario = serializers.HiddenField(default=serializers.CurrentUserDefault())  
     
     class Meta:
         model = Compra
@@ -89,3 +92,12 @@ class CriarEditarCompraSerializer(ModelSerializer):
         compra.save()
         return compra
     
+    # Lembrano que o instance eh o objeto que ja existe no banco e sera atualizado
+    def update(self,instance, validated_data):
+        itens = validated_data.pop("itens") # Pega os itens dos dados validados (da requisicao)
+        if(itens):
+            instance.itens.all().delete() # Apaga os itens antigos que estavam no objeto
+            for item in itens:
+                ItensCompra.objects.create(compra=instance,**item) # Cria novos itens no objeto
+            instance.save() # Salva a instância da compra (recalcula total, etc)
+        return instance    
