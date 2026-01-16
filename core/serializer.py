@@ -73,9 +73,18 @@ class CriarEditarItensCompraSerialzier(ModelSerializer):
     class Meta:
         model = ItensCompra
         fields = ("livro", "quantidade")
+    
+    # Para validar a quantidade de itens pedidos
+    def validate(self, data):
+        if data['quantidade'] > data['livro'].quantidade:
+            raise serializers.ValidationError({
+                'quantidade' : ' Quantidade solicitada nao disponivel em estoque'
+            })
+        return data
         
 class CriarEditarCompraSerializer(ModelSerializer):
     itens = CriarEditarItensCompraSerialzier(many=True)
+    
     # Com isso nao precisa mais passar o usuario na requisicao, pois ele ja pega o usuario atual
     usuario = serializers.HiddenField(default=serializers.CurrentUserDefault())  
     
@@ -88,7 +97,13 @@ class CriarEditarCompraSerializer(ModelSerializer):
         itens = validated_data.pop("itens")
         compra = Compra.objects.create(**validated_data)
         for item in itens:
+            # Diminui a quantidade do livro em estoque
+            livro = item['livro']
+            livro.quantidade -= item['quantidade']
+            livro.save()
+            
             ItensCompra.objects.create(compra=compra,**item)
+        
         compra.save()
         return compra
     
@@ -96,8 +111,21 @@ class CriarEditarCompraSerializer(ModelSerializer):
     def update(self,instance, validated_data):
         itens = validated_data.pop("itens") # Pega os itens dos dados validados (da requisicao)
         if(itens):
+            # Devolve a quantidade dos itens antigos ao estoque
+            for item_antigo in instance.itens.all():
+                livro = item_antigo.livro
+                livro.quantidade += item_antigo.quantidade
+                livro.save()
+            
             instance.itens.all().delete() # Apaga os itens antigos que estavam no objeto
+            
             for item in itens:
+                # Diminui a quantidade do livro em estoque para os novos itens
+                livro = item['livro']
+                livro.quantidade -= item['quantidade']
+                livro.save()
+                
                 ItensCompra.objects.create(compra=instance,**item) # Cria novos itens no objeto
+                
             instance.save() # Salva a instância da compra (recalcula total, etc)
         return instance    
